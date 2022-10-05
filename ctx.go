@@ -3,6 +3,7 @@ package betterhandler
 import (
 	"encoding/json"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -119,6 +120,8 @@ func (ctx *Ctx) BodyParser(v any) error {
 				fieldValue.SetFloat(f)
 			}
 		}
+	} else {
+		return errors.New("Unsupported content type")
 	}
 
 	return nil

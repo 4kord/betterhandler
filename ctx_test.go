@@ -1,10 +1,13 @@
 package betterhandler
 
 import (
+	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 )
 
 type stringIntFloat64 struct {
@@ -14,63 +17,101 @@ type stringIntFloat64 struct {
 }
 
 func TestString(t *testing.T) {
-	want := "Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit..."
+	cases := []struct {
+		name string
+		str  string
+	}{
+		{
+			name: "test_1",
+			str:  "String",
+		},
+	}
 
-	request := httptest.NewRequest("POST", "/string", nil)
-	responseRecorder := httptest.NewRecorder()
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			request := httptest.NewRequest("POST", "/", nil)
+			responseRecorder := httptest.NewRecorder()
 
-	handler := BetterHandler(func(c *Ctx) {
-		c.String(want)
-	})
+			handler := BetterHandler(func(c *Ctx) {
+				c.String(tt.str)
+			})
 
-	handler.ServeHTTP(responseRecorder, request)
+			handler.ServeHTTP(responseRecorder, request)
 
-	if responseRecorder.Body.String() != want {
-		t.Errorf("Want '%s', got '%s'", want, responseRecorder.Body.String())
+			if responseRecorder.Body.String() != tt.str {
+				t.Errorf("Want '%s', got '%s'", tt.str, responseRecorder.Body.String())
+			}
+		})
 	}
 }
 
 func TestJSON(t *testing.T) {
-	give := stringIntFloat64{
-		Key1: "Value1",
-		Key2: 123,
-		Key3: 123.123,
+	cases := []struct {
+		name string
+		give interface{}
+		want string
+	}{
+		{
+			name: "test_1",
+			give: stringIntFloat64{
+				Key1: "Value1",
+				Key2: 123,
+				Key3: 123.123,
+			},
+			want: `{"key1":"Value1","key2":123,"key3":123.123}`,
+		},
 	}
-	want := `{"key1":"Value1","key2":123,"key3":123.123}`
 
-	request := httptest.NewRequest("POST", "/json", nil)
-	responseRecorder := httptest.NewRecorder()
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			request := httptest.NewRequest("POST", "/", nil)
+			responseRecorder := httptest.NewRecorder()
 
-	handler := BetterHandler(func(c *Ctx) {
-		c.JSON(give)
-	})
+			handler := BetterHandler(func(c *Ctx) {
+				c.JSON(tt.give)
+			})
 
-	handler.ServeHTTP(responseRecorder, request)
+			handler.ServeHTTP(responseRecorder, request)
 
-	if responseRecorder.Body.String() != want {
-		t.Error("error")
+			if responseRecorder.Body.String() != tt.want {
+				t.Errorf("want %s, got %s", responseRecorder.Body.String(), tt.want)
+			}
+		})
 	}
 }
 
 func TestXML(t *testing.T) {
-	give := stringIntFloat64{
-		Key1: "Value1",
-		Key2: 123,
-		Key3: 123.123,
+	cases := []struct {
+		name string
+		give interface{}
+		want string
+	}{
+		{
+			name: "test_1",
+			give: stringIntFloat64{
+				Key1: "Value1",
+				Key2: 123,
+				Key3: 123.123,
+			},
+			want: `<stringIntFloat64><key1>Value1</key1><key2>123</key2><key3>123.123</key3></stringIntFloat64>`,
+		},
 	}
-	want := `<stringIntFloat64><key1>Value1</key1><key2>123</key2><key3>123.123</key3></stringIntFloat64>`
 
-	request := httptest.NewRequest("POST", "/json", nil)
-	responseRecorder := httptest.NewRecorder()
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			request := httptest.NewRequest("POST", "/", nil)
+			responseRecorder := httptest.NewRecorder()
 
-	handler := BetterHandler(func(c *Ctx) {
-		c.XML(give)
-	})
+			handler := BetterHandler(func(c *Ctx) {
+				c.XML(tt.give)
+			})
 
-	handler.ServeHTTP(responseRecorder, request)
+			handler.ServeHTTP(responseRecorder, request)
 
-	if responseRecorder.Body.String() != want {
-		t.Error("error")
+			if responseRecorder.Body.String() != tt.want {
+				t.Errorf("want %s, got %s", responseRecorder.Body.String(), tt.want)
+			}
+		})
 	}
 }
 
@@ -131,7 +172,7 @@ Content-Disposition: form-data; name="key3"
 
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
-			request := httptest.NewRequest(tt.method, "/bodyparser", strings.NewReader(tt.body))
+			request := httptest.NewRequest(tt.method, "/", strings.NewReader(tt.body))
 			request.Header.Set("Content-Type", tt.contentType)
 			responseRecorder := httptest.NewRecorder()
 
@@ -145,11 +186,225 @@ Content-Disposition: form-data; name="key3"
 
 				equal := reflect.DeepEqual(tt.want, got)
 				if !equal {
-					t.Errorf("Expected %v, got %v", tt.want, got)
+					t.Errorf("want %v, got %v", tt.want, got)
 				}
 			})
 
 			handler.ServeHTTP(responseRecorder, request)
+		})
+	}
+}
+
+func TestBaseURL(t *testing.T) {
+	cases := []struct {
+		name string
+		url  string
+		want string
+	}{
+		{
+			name: "test_1",
+			url:  "https://example.com/test",
+			want: "https://example.com",
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			request := httptest.NewRequest("GET", "/", nil)
+			request.URL, _ = url.Parse(tt.url)
+			responseRecorder := httptest.NewRecorder()
+
+			handler := BetterHandler(func(c *Ctx) {
+				if c.BaseURL() != tt.want {
+					t.Errorf("want %s, got %s", tt.want, c.BaseURL())
+				}
+			})
+
+			handler.ServeHTTP(responseRecorder, request)
+		})
+	}
+}
+
+func TestSetCookie(t *testing.T) {
+	cases := []struct {
+		name   string
+		cookie *http.Cookie
+	}{
+		{
+			name: "test_1",
+			cookie: &http.Cookie{
+				Name:  "Cookie1",
+				Value: "Value1",
+			},
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			request := httptest.NewRequest("GET", "/", nil)
+			responseRecorder := httptest.NewRecorder()
+
+			handler := BetterHandler(func(c *Ctx) {
+				c.SetCookie(tt.cookie)
+			})
+
+			handler.ServeHTTP(responseRecorder, request)
+
+			if tt.cookie.Name != responseRecorder.Result().Cookies()[0].Name || tt.cookie.Value != responseRecorder.Result().Cookies()[0].Value {
+				t.Errorf("%v and %v are not equal", tt.cookie, responseRecorder.Result().Cookies()[0])
+			}
+		})
+	}
+}
+
+func TestGetCookie(t *testing.T) {
+	cases := []struct {
+		name   string
+		cookie *http.Cookie
+	}{
+		{
+			name: "test_1",
+			cookie: &http.Cookie{
+				Name:  "Cookie1",
+				Value: "Value1",
+			},
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			request := httptest.NewRequest("GET", "/", nil)
+			request.AddCookie(tt.cookie)
+			responseRecorder := httptest.NewRecorder()
+
+			handler := BetterHandler(func(c *Ctx) {
+				got, err := c.GetCookie(tt.cookie.Name)
+				if err != nil {
+					t.Error(err)
+				}
+
+				if tt.cookie.Name != got.Name || tt.cookie.Value != got.Value {
+					t.Errorf("want %v, got %v", tt.cookie, got)
+				}
+			})
+
+			handler.ServeHTTP(responseRecorder, request)
+		})
+	}
+}
+
+func TestGetCookieValue(t *testing.T) {
+	cases := []struct {
+		name   string
+		cookie *http.Cookie
+		want   string
+	}{
+		{
+			name: "test_1",
+			cookie: &http.Cookie{
+				Name:  "Cookie1",
+				Value: "Value1",
+			},
+			want: "Value1",
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			request := httptest.NewRequest("GET", "/", nil)
+			request.AddCookie(tt.cookie)
+			responseRecorder := httptest.NewRecorder()
+
+			handler := BetterHandler(func(c *Ctx) {
+				got, err := c.GetCookieValue(tt.cookie.Name)
+				if err != nil {
+					t.Error(err)
+				}
+
+				if tt.cookie.Value != got {
+					t.Errorf("want %v, got %v", tt.cookie.Value, got)
+				}
+			})
+
+			handler.ServeHTTP(responseRecorder, request)
+		})
+	}
+}
+
+func TestClearCookie(t *testing.T) {
+	cases := []struct {
+		name    string
+		cookies []*http.Cookie
+		clear   []string
+	}{
+		{
+			name: "test_1",
+			cookies: []*http.Cookie{
+				{
+					Name:  "Cookie1",
+					Value: "Value1",
+				},
+				{
+					Name:  "Cookie2",
+					Value: "Value2",
+				},
+			},
+			clear: []string{"Cookie1"},
+		},
+		{
+			name:    "test_2",
+			cookies: []*http.Cookie{},
+			clear:   []string{},
+		},
+		{
+			name: "test_3",
+			cookies: []*http.Cookie{
+				{
+					Name:  "Cookie1",
+					Value: "Value1",
+				},
+				{
+					Name:  "Cookie2",
+					Value: "Value2",
+				},
+			},
+			clear: []string{},
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			request := httptest.NewRequest("GET", "/", nil)
+			for _, cookie := range tt.cookies {
+				request.AddCookie(cookie)
+			}
+			responseRecorder := httptest.NewRecorder()
+
+			handler := BetterHandler(func(c *Ctx) {
+				c.ClearCookie(tt.clear...)
+			})
+
+			handler.ServeHTTP(responseRecorder, request)
+
+			if len(tt.clear) != 0 && len(responseRecorder.Result().Cookies()) != len(tt.clear) {
+				t.Errorf("Response cookies len != clear cookies len")
+			}
+
+			if len(tt.clear) == 0 && len(responseRecorder.Result().Cookies()) != len(tt.cookies) {
+				t.Errorf("Response cookies len != cookies len")
+			}
+
+			for _, cookie := range responseRecorder.Result().Cookies() {
+				if cookie.Value != "" {
+					t.Errorf("| Value | Want empty, got %s", cookie.Value)
+				}
+				if !cookie.Expires.Before(time.Now().Add(-100*time.Hour)) || cookie.Expires.Equal(time.Now().Add(-100*time.Hour)) {
+					t.Errorf("| Expires | Want < time.Now, got %s", cookie.Expires)
+				}
+				if cookie.MaxAge != -1 {
+					t.Errorf("| MaxAge | Want < 0, got %d", cookie.MaxAge)
+				}
+			}
 		})
 	}
 }

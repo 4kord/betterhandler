@@ -111,9 +111,7 @@ func (c *Ctx) BodyParser(v any) error {
 			if len(c.r.MultipartForm.Value[field.Tag.Get("form")]) != 0 {
 				formValue = c.r.MultipartForm.Value[field.Tag.Get("form")][0]
 			}
-			if len(c.r.MultipartForm.File[field.Tag.Get("form")]) != 0 {
-				formFile = c.r.MultipartForm.File[field.Tag.Get("form")]
-			}
+            formFile = c.r.MultipartForm.File[field.Tag.Get("form")]
 
 			switch field.Type.Kind() {
 			case reflect.String:

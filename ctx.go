@@ -1,7 +1,6 @@
 package betterhandler
 
 import (
-	"context"
 	"encoding/json"
 	"encoding/xml"
 	"errors"
@@ -29,7 +28,7 @@ func newCtx(w http.ResponseWriter, r *http.Request) *Ctx {
 	}
 }
 
-// String writes String into responseWriter
+// String writes String into ResponseWriter
 func (c *Ctx) String(v string) error {
 	c.rw.Header().Set("Content-Type", "text/plain")
 
@@ -38,7 +37,7 @@ func (c *Ctx) String(v string) error {
 	return err
 }
 
-// JSON writes JSON into responseWriter
+// JSON writes JSON into ResponseWriter
 func (c *Ctx) JSON(v any) error {
 	c.rw.Header().Set("Content-Type", "application/json")
 
@@ -66,7 +65,7 @@ func (c *Ctx) XML(v any) error {
 	return err
 }
 
-// BodyParser unmarhals request body into v
+// BodyParser decodes request body into v
 func (c *Ctx) BodyParser(v any) error {
 	ctype := c.r.Header.Get("Content-Type")
 
@@ -143,23 +142,18 @@ func (c *Ctx) BaseURL() string {
 	return c.r.URL.Scheme + "://" + c.r.URL.Host
 }
 
-// Context returns the request's context. To change the context, use WithContext.
-func (c *Ctx) Context() context.Context {
-	return c.r.Context()
-}
-
 // Sets cookie
 func (c *Ctx) SetCookie(cookie *http.Cookie) {
 	http.SetCookie(c.rw, cookie)
 }
 
-// Get cookie by key
+// Get cookie by name
 func (c *Ctx) GetCookie(key string) (*http.Cookie, error) {
 	cookie, err := c.r.Cookie(key)
 	return cookie, err
 }
 
-// Get cookie value by key
+// Get cookie value by name
 func (c *Ctx) GetCookieValue(key string) (string, error) {
 	cookie, err := c.r.Cookie(key)
 	return cookie.Value, err

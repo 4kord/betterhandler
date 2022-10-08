@@ -37,7 +37,7 @@ func TestString(t *testing.T) {
 			request := httptest.NewRequest("POST", "/", nil)
 			responseRecorder := httptest.NewRecorder()
 
-			handler := BetterHandler(func(c *Ctx) {
+			handler := BH(func(c *Ctx) {
 				c.String(tt.str)
 			})
 
@@ -72,7 +72,7 @@ func TestJSON(t *testing.T) {
 			request := httptest.NewRequest("POST", "/", nil)
 			responseRecorder := httptest.NewRecorder()
 
-			handler := BetterHandler(func(c *Ctx) {
+			handler := BH(func(c *Ctx) {
 				c.JSON(tt.give)
 			})
 
@@ -107,7 +107,7 @@ func TestXML(t *testing.T) {
 			request := httptest.NewRequest("POST", "/", nil)
 			responseRecorder := httptest.NewRecorder()
 
-			handler := BetterHandler(func(c *Ctx) {
+			handler := BH(func(c *Ctx) {
 				c.XML(tt.give)
 			})
 
@@ -185,7 +185,7 @@ Value2
 			request.Header.Set("Content-Type", tt.contentType)
 			responseRecorder := httptest.NewRecorder()
 
-			handler := BetterHandler(func(c *Ctx) {
+			handler := BH(func(c *Ctx) {
 				var got stringIntFloat64
 
 				err := c.BodyParser(&got)
@@ -212,7 +212,7 @@ example
 		request.Header.Set("Content-Type", "multipart/form-data; boundary=\"boundary\"")
 		responseRecorder := httptest.NewRecorder()
 
-		handler := BetterHandler(func(c *Ctx) {
+		handler := BH(func(c *Ctx) {
 			var got file
 
 			err := c.BodyParser(&got)
@@ -248,7 +248,7 @@ func TestBaseURL(t *testing.T) {
 			request.URL, _ = url.Parse(tt.url)
 			responseRecorder := httptest.NewRecorder()
 
-			handler := BetterHandler(func(c *Ctx) {
+			handler := BH(func(c *Ctx) {
 				if c.BaseURL() != tt.want {
 					t.Errorf("want %s, got %s", tt.want, c.BaseURL())
 				}
@@ -278,7 +278,7 @@ func TestSetCookie(t *testing.T) {
 			request := httptest.NewRequest("GET", "/", nil)
 			responseRecorder := httptest.NewRecorder()
 
-			handler := BetterHandler(func(c *Ctx) {
+			handler := BH(func(c *Ctx) {
 				c.SetCookie(tt.cookie)
 			})
 
@@ -311,7 +311,7 @@ func TestGetCookie(t *testing.T) {
 			request.AddCookie(tt.cookie)
 			responseRecorder := httptest.NewRecorder()
 
-			handler := BetterHandler(func(c *Ctx) {
+			handler := BH(func(c *Ctx) {
 				got, err := c.GetCookie(tt.cookie.Name)
 				if err != nil {
 					t.Error(err)
@@ -349,7 +349,7 @@ func TestGetCookieValue(t *testing.T) {
 			request.AddCookie(tt.cookie)
 			responseRecorder := httptest.NewRecorder()
 
-			handler := BetterHandler(func(c *Ctx) {
+			handler := BH(func(c *Ctx) {
 				got, err := c.GetCookieValue(tt.cookie.Name)
 				if err != nil {
 					t.Error(err)
@@ -414,7 +414,7 @@ func TestClearCookie(t *testing.T) {
 			}
 			responseRecorder := httptest.NewRecorder()
 
-			handler := BetterHandler(func(c *Ctx) {
+			handler := BH(func(c *Ctx) {
 				c.ClearCookie(tt.clear...)
 			})
 

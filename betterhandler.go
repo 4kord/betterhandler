@@ -5,10 +5,10 @@ import (
 )
 
 // BetterHandler signature
-type BetterHandler func(*Ctx)
+type BH func(*Ctx)
 
 // ServeHTTP method to implement Handler interface
-func (h BetterHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h BH) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h(newCtx(w, r))
 }
 

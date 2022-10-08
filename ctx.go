@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"reflect"
 	"strconv"
@@ -107,8 +108,12 @@ func (c *Ctx) BodyParser(v any) error {
 			field := reflectionType.Field(i)
 			fieldValue := reflectionValue.Field(i)
 			var formValue string
+			var formFile []*multipart.FileHeader
 			if len(c.r.MultipartForm.Value[field.Tag.Get("form")]) != 0 {
 				formValue = c.r.MultipartForm.Value[field.Tag.Get("form")][0]
+			}
+			if len(c.r.MultipartForm.File[field.Tag.Get("form")]) != 0 {
+				formFile = c.r.MultipartForm.File[field.Tag.Get("form")]
 			}
 
 			switch field.Type.Kind() {
@@ -120,6 +125,10 @@ func (c *Ctx) BodyParser(v any) error {
 			case reflect.Float32, reflect.Float64:
 				f, _ := strconv.ParseFloat(formValue, 64)
 				fieldValue.SetFloat(f)
+			case reflect.Slice:
+				if reflect.TypeOf([]*multipart.FileHeader{}) == field.Type {
+					fieldValue.Set(reflect.ValueOf(formFile))
+				}
 			}
 		}
 	} else {

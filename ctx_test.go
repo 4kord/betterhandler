@@ -1,6 +1,7 @@
 package betterhandler
 
 import (
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -14,6 +15,10 @@ type stringIntFloat64 struct {
 	Key1 string  `json:"key1" xml:"key1" form:"key1"`
 	Key2 int     `json:"key2" xml:"key2" form:"key2"`
 	Key3 float64 `json:"key3" xml:"key3" form:"key3"`
+}
+
+type file struct {
+	Key1 []*multipart.FileHeader `form:"key1"`
 }
 
 func TestString(t *testing.T) {
@@ -161,6 +166,10 @@ Content-Disposition: form-data; name="key2"
 Content-Disposition: form-data; name="key3"
 
 32.12
+--boundary
+Content-Disposition: form-data; name="key4"; filename="example.txt"
+
+Value2
 --boundary--`,
 			want: stringIntFloat64{
 				Key1: "Value1",
@@ -193,6 +202,31 @@ Content-Disposition: form-data; name="key3"
 			handler.ServeHTTP(responseRecorder, request)
 		})
 	}
+	t.Run("file_test", func(t *testing.T) {
+		body := `--boundary
+Content-Disposition: form-data; name="key1"; filename="example.txt"
+
+example
+--boundary--`
+		request := httptest.NewRequest("GET", "/", strings.NewReader(body))
+		request.Header.Set("Content-Type", "multipart/form-data; boundary=\"boundary\"")
+		responseRecorder := httptest.NewRecorder()
+
+		handler := BetterHandler(func(c *Ctx) {
+			var got file
+
+			err := c.BodyParser(&got)
+			if err != nil {
+				t.Error(err)
+			}
+
+			if got.Key1 == nil {
+				t.Error("Expected []*multipart.FileHeader, got nil")
+			}
+		})
+
+		handler.ServeHTTP(responseRecorder, request)
+	})
 }
 
 func TestBaseURL(t *testing.T) {

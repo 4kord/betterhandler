@@ -16,75 +16,75 @@ import (
 
 // Context struct
 type Ctx struct {
-	rw http.ResponseWriter
-	r  *http.Request
+	RW http.ResponseWriter
+	R  *http.Request
 }
 
 // Creates context from ResponseWriter and Request
 func newCtx(w http.ResponseWriter, r *http.Request) *Ctx {
 	return &Ctx{
-		rw: w,
-		r:  r,
+		RW: w,
+		R:  r,
 	}
 }
 
 // String writes String into ResponseWriter
 func (c *Ctx) String(v string) error {
-	c.rw.Header().Set("Content-Type", "text/plain")
+	c.RW.Header().Set("Content-Type", "text/plain")
 
-	_, err := c.rw.Write([]byte(v))
+	_, err := c.RW.Write([]byte(v))
 
 	return err
 }
 
 // JSON writes JSON into ResponseWriter
 func (c *Ctx) JSON(v any) error {
-	c.rw.Header().Set("Content-Type", "application/json")
+	c.RW.Header().Set("Content-Type", "application/json")
 
 	b, err := json.Marshal(v)
 	if err != nil {
 		return err
 	}
 
-	_, err = c.rw.Write(b)
+	_, err = c.RW.Write(b)
 
 	return err
 }
 
 // XML writes XML into responseWriter
 func (c *Ctx) XML(v any) error {
-	c.rw.Header().Set("Content-Type", "application/xml")
+	c.RW.Header().Set("Content-Type", "application/xml")
 
 	b, err := xml.Marshal(v)
 	if err != nil {
 		return err
 	}
 
-	_, err = c.rw.Write(b)
+	_, err = c.RW.Write(b)
 
 	return err
 }
 
 // BodyParser decodes request body into v
 func (c *Ctx) BodyParser(v any) error {
-	ctype := c.r.Header.Get("Content-Type")
+	ctype := c.R.Header.Get("Content-Type")
 
 	if strings.HasPrefix(ctype, "application/json") {
-		b, err := io.ReadAll(c.r.Body)
+		b, err := io.ReadAll(c.R.Body)
 		if err != nil {
 			return err
 		}
 
 		return json.Unmarshal(b, v)
 	} else if strings.HasPrefix(ctype, "application/xml") || strings.HasPrefix(ctype, "text/xml") {
-		b, err := io.ReadAll(c.r.Body)
+		b, err := io.ReadAll(c.R.Body)
 		if err != nil {
 			return err
 		}
 
 		return xml.Unmarshal(b, v)
 	} else if strings.HasPrefix(ctype, "multipart/form-data") {
-		err := c.r.ParseMultipartForm(10 << 32)
+		err := c.R.ParseMultipartForm(10 << 32)
 		if err != nil {
 			return err
 		}
@@ -108,10 +108,10 @@ func (c *Ctx) BodyParser(v any) error {
 			fieldValue := reflectionValue.Field(i)
 			var formValue string
 			var formFile []*multipart.FileHeader
-			if len(c.r.MultipartForm.Value[field.Tag.Get("form")]) != 0 {
-				formValue = c.r.MultipartForm.Value[field.Tag.Get("form")][0]
+			if len(c.R.MultipartForm.Value[field.Tag.Get("form")]) != 0 {
+				formValue = c.R.MultipartForm.Value[field.Tag.Get("form")][0]
 			}
-            formFile = c.r.MultipartForm.File[field.Tag.Get("form")]
+			formFile = c.R.MultipartForm.File[field.Tag.Get("form")]
 
 			switch field.Type.Kind() {
 			case reflect.String:
@@ -137,30 +137,30 @@ func (c *Ctx) BodyParser(v any) error {
 
 // Returns the base URL (protocol + host) as a string
 func (c *Ctx) BaseURL() string {
-	return c.r.URL.Scheme + "://" + c.r.URL.Host
+	return c.R.URL.Scheme + "://" + c.R.URL.Host
 }
 
 // Sets cookie
 func (c *Ctx) SetCookie(cookie *http.Cookie) {
-	http.SetCookie(c.rw, cookie)
+	http.SetCookie(c.RW, cookie)
 }
 
 // Get cookie by name
 func (c *Ctx) GetCookie(key string) (*http.Cookie, error) {
-	cookie, err := c.r.Cookie(key)
+	cookie, err := c.R.Cookie(key)
 	return cookie, err
 }
 
 // Get cookie value by name
 func (c *Ctx) GetCookieValue(key string) (string, error) {
-	cookie, err := c.r.Cookie(key)
+	cookie, err := c.R.Cookie(key)
 	return cookie.Value, err
 }
 
 // Expire a client cookie (or all cookies if left empty)
 func (c *Ctx) ClearCookie(key ...string) {
 	if len(key) == 0 {
-		for _, cookie := range c.r.Cookies() {
+		for _, cookie := range c.R.Cookies() {
 			newCookie := http.Cookie{
 				Name:    cookie.Name,
 				Value:   "",
@@ -168,13 +168,13 @@ func (c *Ctx) ClearCookie(key ...string) {
 				Expires: time.Now().Add(-100 * time.Hour),
 			}
 
-			http.SetCookie(c.rw, &newCookie)
+			http.SetCookie(c.RW, &newCookie)
 		}
 		return
 	}
 
 	for _, k := range key {
-		cookie, err := c.r.Cookie(k)
+		cookie, err := c.R.Cookie(k)
 		if err != nil {
 			continue
 		}
@@ -185,6 +185,6 @@ func (c *Ctx) ClearCookie(key ...string) {
 			Expires: time.Now().Add(-100 * time.Hour),
 		}
 
-		http.SetCookie(c.rw, &newCookie)
+		http.SetCookie(c.RW, &newCookie)
 	}
 }

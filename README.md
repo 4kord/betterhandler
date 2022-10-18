@@ -19,7 +19,7 @@ BetterHandler is a handler with some useful features that implements the standar
 ## Installation
 
 ```sh
-go get -u github.com/4kord/BetterHandler
+go get -u github.com/4kord/betterhandler
 ```
 
 ## Quickstart
@@ -28,11 +28,11 @@ package main
 
 import (
     "net/http"
-    "github.com/4kord/BetterHandler"
+    "github.com/4kord/betterhandler"
 )
 
 func main() {
-    http.ListenAndServe(":3000", BetterHandler.BH(func(c *BetterHandler.Ctx) {
+    http.ListenAndServe(":3000", betterhandler.BH(func(c *betterhandler.Ctx) {
         c.rw.WriteHeader(http.StatusOK)
 
         c.String("Hello, World!")
@@ -43,7 +43,7 @@ func main() {
 ## Examples
 ##### Writing String into ResponseWriter
 ```golang
-func handler(c *BetterHandler.Ctx) {
+func handler(c *betterhandler.Ctx) {
     c.String("Hello, World!")
 }
 ```
@@ -56,7 +56,7 @@ type Json struct {
     Key3 float64 `json:"key3"`
 }
 
-func handler(c *BetterHandler.Ctx) {
+func handler(c *betterhandler.Ctx) {
     c.JSON(Json{
         Key1: "value1",
         Key2: 10,
@@ -64,8 +64,8 @@ func handler(c *BetterHandler.Ctx) {
     })
 }
 
-func handler2(c *BetterHandler.Ctx) {
-    c.JSON(BetterHandler.Map{
+func handler2(c *betterhandler.Ctx) {
+    c.JSON(betterhandler.Map{
         "Key1": "value1",
         "Key2": 10,
         "Key3": 3.14,
@@ -81,7 +81,7 @@ type Xml struct {
     Key3 float64 `xml:"key3"`
 }
 
-func handler(c *BetterHandler.Ctx) {
+func handler(c *betterhandler.Ctx) {
     c.XML(Xml{
         Key1: "value1",
         Key2: 10,
@@ -89,8 +89,8 @@ func handler(c *BetterHandler.Ctx) {
     })
 }
 
-func handler2(c *BetterHandler.Ctx) {
-    c.XML(BetterHandler.Map{
+func handler2(c *betterhandler.Ctx) {
+    c.XML(betterhandler.Map{
         "Key1": "value1",
         "Key2": 10,
         "Key3": 3.14,
@@ -108,7 +108,7 @@ type V struct {
     Key4 []*Multipart.FileHeader `form:"key4"`
 }
 
-func handler(c *BetterHandler.Ctx) {
+func handler(c *betterhandler.Ctx) {
     var myStruct V
     
     c.BodyParser(&myStruct)
@@ -117,14 +117,14 @@ func handler(c *BetterHandler.Ctx) {
 
 ##### Getting base url
 ```go
-func handler(c *BetterHandler.Ctx) {
+func handler(c *betterhandler.Ctx) {
     fmt.Println(c.BaseUrl())
 }
 ```
 
 ##### Set cookie
 ```go
-func handler(c *BetterHandler.Ctx) {
+func handler(c *betterhandler.Ctx) {
     cookie := &http.Cookie{
         Name: "myCookie",
         Value: "value",
@@ -137,7 +137,7 @@ func handler(c *BetterHandler.Ctx) {
 
 ##### Get cookie
 ```go
-func handler(c *BetterHandler.Ctx) {
+func handler(c *betterhandler.Ctx) {
     cookie, err := c.GetCookie("myCookie")
     if err != nil {
         if errors.Is(err, http.ErrNoCookie) {
@@ -151,15 +151,15 @@ func handler(c *BetterHandler.Ctx) {
 
 ##### Expire a client cookie / all cookies
 ```go
-func handler(c *BetterHandler.Ctx) {
+func handler(c *betterhandler.Ctx) {
     c.ClearCookie("myCookie") // Expire myCookie
 }
 
-func handler2(c *BetterHandler.Ctx) {
+func handler2(c *betterhandler.Ctx) {
     c.ClearCookie("myCookie2") // Expire myCookie, myCookie2
 }
 
-func handler3(c *BetterHandler.Ctx) {
+func handler3(c *betterhandler.Ctx) {
     c.ClearCookie() // Expire all cookies
 }
 ```
